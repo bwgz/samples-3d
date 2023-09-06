@@ -4,13 +4,13 @@ import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 
 const generateStone = (callback) => {
     const mtlLoader = new MTLLoader();
-    mtlLoader.setPath("http://localhost:3000/curling/models/stone/red/");
+    mtlLoader.setPath("http://localhost:3000/samples-3d/curling/models/stone/red/");
 
     mtlLoader.load('11720_Curling_Stone_v1_L3.mtl', (mtl) => {
         mtl.preload();
         const objLoader = new OBJLoader();
         objLoader.setMaterials(mtl);
-        objLoader.setPath("http://localhost:3000/curling/models/stone/red/");
+        objLoader.setPath("http://localhost:3000/samples-3d/curling/models/stone/red/");
         objLoader.load('11720_Curling_Stone_v1_L3.obj', (obj) => {
             const stone = obj;
             stone.scale.set(1.25, 1.25, 1.25);
