@@ -1,33 +1,66 @@
-import * as THREE from 'three';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import * as THREE from "three";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
 
-const generateStone = (callback) => {
-    const mtlLoader = new MTLLoader();
-    mtlLoader.setPath("/samples-3d/curling/models/stone/red/");
+const dump = (child) => {
+  const size = new THREE.Vector3();
+  const box = new THREE.Box3().setFromObject(child).getSize(size);
+  console.log("traverse - BoxSize: " + JSON.stringify(size));
+  child.traverse(dump);
+};
 
-    mtlLoader.load('11720_Curling_Stone_v1_L3.mtl', (mtl) => {
+class StoneModel {
+  static generate() {
+    return new Promise((resolve) => {
+      const mtlLoader = new MTLLoader();
+      mtlLoader.setPath("/samples-3d/curling/models/stone/red/");
+
+      mtlLoader.load("11720_Curling_Stone_v1_L3.mtl", (mtl) => {
         mtl.preload();
         const objLoader = new OBJLoader();
         objLoader.setMaterials(mtl);
         objLoader.setPath("/samples-3d/curling/models/stone/red/");
-        objLoader.load('11720_Curling_Stone_v1_L3.obj', (obj) => {
-            const stone = obj;
-            stone.scale.set(1.25, 1.25, 1.25);
+        objLoader.load("11720_Curling_Stone_v1_L3.obj", (obj) => {
+          const stone = obj;
 
-            stone.traverse(function (child) {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
-            });
+          stone.traverse(function (child) {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
 
-            stone.castShadow = true;
+          stone.castShadow = true;
 
-            console.log(stone)
-            callback(stone);
+          resolve(stone);
         });
+      });
     });
+  }
 }
 
-export { generateStone };
+class StoneSet {
+  static generate(dimensions) {
+    return new Promise((resolve) => {
+      StoneModel.generate().then((stone) => {
+        const stones = [];
+        const box = new THREE.Box3().setFromObject(stone);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        const actual = Math.max(size.x, size.y);
+        const expected = dimensions.diameter;
+        const scale = expected / actual;
+        stone.scale.set(scale, scale, scale);
+
+        for (let i = 1; i <= 8; i++) {
+          stones.push(stone.clone());
+        }
+
+        resolve(stones);
+      });
+    });
+  }
+}
+
+export { StoneModel, StoneSet };

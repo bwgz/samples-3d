@@ -1,35 +1,79 @@
-const meterToMillimeter = (m) => m * 1000;
-const centimeterToMillimeter = (cm) => cm * 10;
+const meterToMeter = (m) => m;
 const meterToCentimeter = (m) => m * 100;
+const meterToMillimeter = (m) => m * 1000;
 
-const iceWidth = 4.750;
-const toHack = 1.829;
-const toBackLine = toHack + 1.829;
-const toTeeLine = toBackLine + 1.829;
-const toHogLine = toTeeLine + 6.401;
+// All values are in meters.
+
+const width = 4.75;
+const board = 0;
+const boardToHack = 1.829;
+const hackToBackLine = 1.829;
+const backLineToTeeLine = 1.829;
+const teeLineToHogLine = 6.401;
 const hogToHog = 21.945;
 
-const lineWidth = 5;
-const hogLineWidth = 10.16; // 10.16 cm
+const twelveFootRadius = 1.829;
+const eightFootRadius = 1.219;
+const fourFootRadius = 0.61;
+const buttonRadius = 0.152;
+const pinRadius = 0.01;
 
-const rink = {
-    width: meterToCentimeter(iceWidth),
+const hack = boardToHack;
+const backLine = hack + hackToBackLine;
+const teeLine = backLine + backLineToTeeLine;
+const hogLine = teeLine + teeLineToHogLine;
+const centerLine = width / 2;
 
-    hack: meterToCentimeter(toHack),
-    backLine: meterToCentimeter(toBackLine),
-    teeLine: meterToCentimeter(toTeeLine),
-    hogLine: meterToCentimeter(toHogLine),
-    centerLine: meterToCentimeter(iceWidth) / 2,
+const backLineWidth = 0.05;
+const teeLineWidth = 0.05;
+const hogLineWidth = 0.1016;
+const centerLineWidth = 0.05;
 
-    twelveFoot: meterToCentimeter(1.829),
-    eightFoot: meterToCentimeter(1.219),
-    fourFoot: meterToCentimeter(0.610),
-    button: meterToCentimeter(0.152),
+class IceDimensions {
+  static generate(converter) {
+    const dimensions = {
+      width: converter(width),
+      board: converter(board),
+      boardToHack: converter(boardToHack),
+      hackToBackLine: converter(hackToBackLine),
+      backLineToTeeLine: converter(backLineToTeeLine),
+      teeLineToHogLine: converter(teeLineToHogLine),
+      hogToHog: converter(hogToHog),
 
-    hogToHog: meterToCentimeter(hogToHog),
+      twelveFootRadius: converter(twelveFootRadius),
+      eightFootRadius: converter(eightFootRadius),
+      fourFootRadius: converter(fourFootRadius),
+      buttonRadius: converter(buttonRadius),
+      pinRadius: converter(pinRadius),
 
-    lineWidth: lineWidth,
-    hogLineWidth: hogLineWidth,
-};
+      hack: converter(hack),
+      backLine: converter(backLine),
+      teeLine: converter(teeLine),
+      hogLine: converter(hogLine),
+      centerLine: converter(centerLine),
 
-export { rink };
+      backLineWidth: converter(backLineWidth),
+      teeLineWidth: converter(teeLineWidth),
+      hogLineWidth: converter(hogLineWidth),
+      centerLineWidth: converter(centerLineWidth),
+    };
+
+    return dimensions;
+  }
+}
+
+const stoneCircumference = 0.9144;
+const stoneRadius = stoneCircumference / (2 * Math.PI);
+
+class StoneDimensions {
+  static generate(converter) {
+    const dimensions = {
+      circumference: converter(stoneCircumference),
+      radius: converter(stoneRadius),
+      diameter: converter(stoneRadius * 2),
+    };
+    return dimensions;
+  }
+}
+
+export { IceDimensions, StoneDimensions, meterToMeter, meterToCentimeter, meterToMillimeter };
