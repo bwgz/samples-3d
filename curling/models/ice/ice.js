@@ -6,7 +6,6 @@ const iceWhiteWashColor = GRAY_WHITE;
 const iceWhiteWashAlpha = 0.2;
 
 const generateEnd = (dimensions, image) => {
-  console.log(dimensions);
   const canvas = document.createElement("canvas");
   canvas.width = dimensions.width;
   canvas.height = dimensions.hogLine;

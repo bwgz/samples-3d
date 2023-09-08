@@ -2,13 +2,15 @@
 
 import * as THREE from 'three';
 
-
-
 const setupLighting = () => {
-    const lights = [];
+    const lights = {
+        all: [],
+        ambient: [],
+        spot: [],
+    };
 
     const ambient = new THREE.HemisphereLight(0xffffff, 0x8d8d8d, 5);
-    lights.push(ambient);
+    lights.ambient.push(ambient);
     
     const spotLight = new THREE.SpotLight(0xFFFFFF, 50000.0);
     spotLight.position.set(25, 250, 100);
@@ -23,11 +25,13 @@ const setupLighting = () => {
     spotLight.shadow.camera.near = 1;
     spotLight.shadow.camera.far = 200;
     spotLight.shadow.focus = 1;
-    //lights.push(spotLight);
+    lights.spot.push(spotLight);
 
     const helper = new THREE.CameraHelper(spotLight.shadow.camera)
-    //lights.push(helper);
+    lights.all.push(helper);
 
+    lights.all.push(...lights.ambient);
+    lights.all.push(...lights.spot);
 
     return lights;
     }
