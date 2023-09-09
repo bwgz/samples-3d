@@ -186,7 +186,7 @@ class IceModel {
     return new Promise((resolve) => {
       const image = new Image();
       image.src = "/samples-3d/curling/models/ice/ice-02.png";
-      image.onload = function () {
+      image.onload = () => {
         const near = generateEnd(dimensions, image);
         const middle = generateHogToHog(dimensions, image);
         const far = near.clone();

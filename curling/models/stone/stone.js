@@ -10,7 +10,7 @@ const dump = (child) => {
 };
 
 class StoneModel {
-  static generate() {
+  static generate(dimensions) {
     return new Promise((resolve) => {
       const mtlLoader = new MTLLoader();
       mtlLoader.setPath("/samples-3d/curling/models/stone/red/");
@@ -23,6 +23,15 @@ class StoneModel {
         objLoader.load("11720_Curling_Stone_v1_L3.obj", (obj) => {
           const stone = obj;
 
+          const box = new THREE.Box3().setFromObject(stone);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+  
+          const actual = Math.max(size.x, size.y);
+          const expected = dimensions.diameter;
+          const scale = expected / actual;
+          stone.scale.set(scale, scale, scale);
+  
           stone.traverse(function (child) {
             if (child.isMesh) {
               child.castShadow = true;
@@ -42,16 +51,8 @@ class StoneModel {
 class StoneSet {
   static generate(dimensions) {
     return new Promise((resolve) => {
-      StoneModel.generate().then((stone) => {
+      StoneModel.generate(dimensions).then((stone) => {
         const stones = [];
-        const box = new THREE.Box3().setFromObject(stone);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-
-        const actual = Math.max(size.x, size.y);
-        const expected = dimensions.diameter;
-        const scale = expected / actual;
-        stone.scale.set(scale, scale, scale);
 
         for (let i = 1; i <= 8; i++) {
           stones.push(stone.clone());

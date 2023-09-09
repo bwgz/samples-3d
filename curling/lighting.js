@@ -9,7 +9,7 @@ const setupLighting = () => {
         spot: [],
     };
 
-    const ambient = new THREE.HemisphereLight(0xffffff, 0x8d8d8d, 5);
+    const ambient = new THREE.AmbientLight(0xffffff, 2);
     lights.ambient.push(ambient);
     
     const spotLight = new THREE.SpotLight(0xFFFFFF, 50000.0);

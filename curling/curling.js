@@ -12,13 +12,28 @@ import { Animation } from "./animation.js";
 import { scene, renderer } from "./init.js";
 import { setupLighting } from "./lighting.js";
 import { gui } from "./datgui.js";
+import { dumpGeometry } from "./utils.js";
 
 const converter = meterToCentimeter;
 const iceDimensions = IceDimensions.generate(converter);
 const stoneDimensions = StoneDimensions.generate(converter);
 
+const cameras = {
+    cameras: [],
+    index: 0,
+    live: null,
+};
+
+let origin = new THREE.Vector3(0, 0, 0);
+
 const sheet = {
+    arena: null,
     ice: null,
+    stones: [],
+};
+
+const shot = {
+    shooter: null,
     stones: [],
 };
 
@@ -27,107 +42,143 @@ let mixer;
 const stats = Stats();
 document.body.appendChild(stats.dom);
 
-const lights = setupLighting();
-lights.all.forEach((light) => scene.add(light));
+const manager = new THREE.LoadingManager();
+manager.onStart = function (url, itemsLoaded, itemsTotal) {
+    console.log("Started loading file: " + url + ".\nLoaded " + itemsLoaded + " of " + itemsTotal + " files.");
+};
 
-// camera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, converter(500));
-//camera.lookAt(0, iceDimensions.hogLine, 0);
+manager.onLoad = function () {
+    console.log("Loading complete!");
+    const arena = sheet.arena;
+    const ice = sheet.ice;
+    const stones = sheet.stones[RED];
 
-// orbit controls
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.update();
+    arena.scale.set(2.0, 2.0, 2.0);
+    dumpGeometry("arena after scale", arena);
 
-const dump = (string, object) => {
-    const box = new THREE.Box3().setFromObject(object);
+    const box = new THREE.Box3().setFromObject(arena);
     const boundingBox = new THREE.Box3();
     const center = new THREE.Vector3();
     const size = new THREE.Vector3();
 
-    boundingBox.setFromObject(object);
+    boundingBox.setFromObject(arena);
     box.getCenter(center);
     box.getSize(size);
 
-    console.log(string + " - boundingBox: " + JSON.stringify(boundingBox));
-    console.log(string + " - center: " + JSON.stringify(center));
-    console.log(string + " - size: " + JSON.stringify(size));
-};
-
-ArenaModel.generate(iceDimensions).then((arena) => {
-    //arena.rotateZ(Math.PI / 2)
-    sheet.arena = arena;
-
-    dump("original", arena);
-
-    arena.scale.set(2.0, 2.0, 2.0);
-    dump("after", arena);
-
-    //arena.position.sub( center ); // center the model
-    //arena.position.x = center.x;
-    //arena.position.y = 0;
-    //arena.position.x = 0;
-    //arena.position.z = 0;
-    //arena.rotation.z = Math.PI / 2;   // rotate the model
-
-    //  camera.position.set(2470.860704331167, 82.51215509395111, 258.47720019519244);
-    //  camera.lookAt(size.x / 2, size.y / 2, size.z / 2 );
-
-    //camera.position.set(0, -100, 1000);
-    //camera.lookAt(0, 0, 0);
-    //controls.target.set(0, 0, 0);
-    //controls.update();
-
-    //console.log("render - camera.position: " + JSON.stringify(camera.position));
-    //console.log("render - camera.rotation: " + JSON.stringify(camera.rotation));
-    controls.update();
-
-    //console.log("ArenaModel.generate - BoxSize: " + JSON.stringify(size));
-    scene.add(arena);
-});
-
-IceModel.generate(iceDimensions).then((ice) => {
-    const x = -3443 + iceDimensions.width / 2;
-    const y = 4422 - iceDimensions.length / 2;
+    dumpGeometry("ice", ice);
+    console.log("iceDimensions", iceDimensions);
+    const x = center.x + iceDimensions.width / 2 + 75;
+    const y = center.y - iceDimensions.length / 2;
     const z = 9;
+    origin.x = x;
+    origin.y = y;
+    origin.z = z;
+
+    console.log("orgin", origin);
+
     ice.position.set(x, y, z);
+    dumpGeometry("ice after move", ice);
 
-    sheet.ice = ice;
-    scene.add(ice);
+    shooterCamera.position.set(x, y - meterToCentimeter(1), z + meterToCentimeter(2));
+    shooterCamera.lookAt(x, y + meterToCentimeter(20), z);
 
-    dump("arena", sheet.arena);
-    dump("ice", ice);
+    nearCamera.position.set(x, y - meterToCentimeter(5), z + meterToCentimeter(6));
+    nearCamera.lookAt(x, y, z + meterToCentimeter(6));
 
-    camera.position.set(x, y - 100, z + 100);
-    camera.lookAt(x, y, z);
-    controls.target.set(x, y, z);
-    controls.update();
+    sideCamera.position.set(x + meterToCentimeter(18), y + iceDimensions.length / 2, z + meterToCentimeter(5));
+    sideCamera.lookAt(center.x, center.y, z);
+    sideCamera.rotateZ(Math.PI / 2);
 
-    const box = new THREE.Box3().setFromObject(ice);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-});
+    farCamera.position.set(x, y + meterToCentimeter(50), z + meterToCentimeter(6));
+    farCamera.lookAt(x, y, z - meterToCentimeter(6));
+    farCamera.rotateZ(Math.PI);
 
-StoneSet.generate(stoneDimensions).then((stones) => {
+    skipCamera.position.set(x, y + iceDimensions.hogLine + iceDimensions.hogToHog + iceDimensions.hogLine - iceDimensions.backLine, z + meterToCentimeter(2));
+    skipCamera.lookAt(x, y + iceDimensions.hogLine + iceDimensions.hogToHog, z - meterToCentimeter(1));
+    skipCamera.rotateZ(Math.PI);
+
     stones.forEach((stone, index) => {
-        stone.position.x = iceDimensions.width / 2 - stoneDimensions.diameter / 2;
-        stone.position.y = stoneDimensions.diameter * index + stoneDimensions.diameter / 2;
-        //scene.add(stone);
+        stone.position.x = origin.x + iceDimensions.width / 2 - stoneDimensions.diameter / 2;
+        stone.position.y =
+            center.y - iceDimensions.length / 2 + stoneDimensions.diameter * index + stoneDimensions.diameter / 2;
+        stone.position.z = z;
+        scene.add(stone);
     });
 
+    scene.add(arena);
+    scene.add(ice);
+
+    shot.stones = sheet.stones;
+
+    shot.stones[RED][0].position.x = origin.x - iceDimensions.width / 2 + stoneDimensions.diameter / 2;
+    shot.stones[RED][0].position.y = origin.y + iceDimensions.length - (stoneDimensions.diameter / 2);
+
+    shot.stones[RED][1].position.x = origin.x;
+    shot.stones[RED][1].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(2);
+
+    shot.stones[RED][2].position.x = origin.x + meterToCentimeter(1);
+    shot.stones[RED][2].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(3);
+
+    shot.stones[RED][3].position.x = origin.x + meterToCentimeter(1.2);
+    shot.stones[RED][3].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(6);
+
+    shot.shooter = shot.stones[RED][4];
+
+    const finish = new THREE.Vector3(0, 3800, 0);
+    const clip = Animation.generate(origin, iceDimensions, finish);
+    mixer = new THREE.AnimationMixer(shot.shooter);
+    const clipAction = mixer.clipAction(clip);
+    clipAction.play();
+};
+
+manager.onProgress = function (url, itemsLoaded, itemsTotal) {
+    //console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+};
+
+manager.onError = function (url) {
+    console.log("There was an error loading " + url);
+};
+
+const lights = setupLighting();
+lights.all.forEach((light) => scene.add(light));
+
+// camera
+const shooterCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const nearCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const sideCamera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const farCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const skipCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
+
+cameras.cameras.push(shooterCamera);
+cameras.cameras.push(nearCamera);
+cameras.cameras.push(sideCamera);
+cameras.cameras.push(farCamera);
+cameras.cameras.push(skipCamera);
+
+cameras.live = 1;
+gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
+
+// orbit controls
+//const controls = new OrbitControls(camera, renderer.domElement);
+//controls.update();
+
+manager.itemStart("arena");
+ArenaModel.generate(iceDimensions).then((arena) => {
+    sheet.arena = arena;
+    manager.itemEnd("arena");
+});
+
+manager.itemStart("ice");
+IceModel.generate(iceDimensions).then((ice) => {
+    sheet.ice = ice;
+    manager.itemEnd("ice");
+});
+
+manager.itemStart("stone");
+StoneSet.generate(stoneDimensions).then((stones) => {
     sheet.stones[RED] = stones;
 
-    console.log(iceDimensions);
-    const stone = sheet.stones[RED][0];
-    const stoneFolder = gui.addFolder("Stone");
-
-    stoneFolder.add(stone.position, "x", -(iceDimensions.width / 2), iceDimensions.width / 2);
-    stoneFolder.add(stone.position, "y", 0, iceDimensions.length);
-    stoneFolder.open();
-
-    //const clip = Animation.generate();
-    //mixer = new THREE.AnimationMixer(sheet.stones[RED][0]);
-    //const clipAction = mixer.clipAction(clip);
-    //clipAction.play();
+    manager.itemEnd("stone");
 });
 
 function resizeRendererToDisplaySize(renderer) {
@@ -147,20 +198,29 @@ const clock = new THREE.Clock();
 function render() {
     if (resizeRendererToDisplaySize(renderer)) {
         const canvas = renderer.domElement;
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
+        shooterCamera.aspect = canvas.clientWidth / canvas.clientHeight;
+        shooterCamera.updateProjectionMatrix();
     }
 
     if (mixer) {
         const delta = clock.getDelta();
-        //mixer.update(delta);
-        //controls.target = sheet.stones[RED][0].position;
-        controls.update();
+        mixer.update(delta);
+        const stone = shot.shooter;
+        shooterCamera.position.set(
+            stone.position.x,
+            stone.position.y - meterToCentimeter(2),
+            stone.position.z + meterToCentimeter(2)
+        );
+        shooterCamera.lookAt(stone.position);
+        shooterCamera.lookAt(stone.position.x, stone.position.y + meterToCentimeter(5), stone.position.z);
+
+        shooterCamera.updateProjectionMatrix();
+        nearCamera.updateProjectionMatrix();
+        sideCamera.updateProjectionMatrix();
+        farCamera.updateProjectionMatrix();
     }
 
-    //console.log("render - camera.position: " + JSON.stringify(camera.position));
-    //console.log("render - camera.rotation: " + JSON.stringify(camera.rotation));
-    renderer.render(scene, camera);
+    renderer.render(scene, cameras.cameras[cameras.live]);
 
     stats.update();
 }
