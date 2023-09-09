@@ -79,6 +79,10 @@ manager.onLoad = function () {
     ice.position.set(x, y, z);
     dumpGeometry("ice after move", ice);
 
+    const lights = setupLighting(origin, iceDimensions);
+    lights.all.forEach((light) => scene.add(light));
+
+
     shooterCamera.position.set(x, y - meterToCentimeter(1), z + meterToCentimeter(2));
     shooterCamera.lookAt(x, y + meterToCentimeter(20), z);
 
@@ -120,7 +124,7 @@ manager.onLoad = function () {
     shot.stones[RED][2].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(3);
 
     shot.stones[RED][3].position.x = origin.x + meterToCentimeter(1.2);
-    shot.stones[RED][3].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(6);
+    shot.stones[RED][3].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(6.25);
 
     shot.shooter = shot.stones[RED][4];
 
@@ -139,8 +143,6 @@ manager.onError = function (url) {
     console.log("There was an error loading " + url);
 };
 
-const lights = setupLighting();
-lights.all.forEach((light) => scene.add(light));
 
 // camera
 const shooterCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, converter(100));
@@ -155,7 +157,7 @@ cameras.cameras.push(sideCamera);
 cameras.cameras.push(farCamera);
 cameras.cameras.push(skipCamera);
 
-cameras.live = 1;
+cameras.live = 3;
 gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
 
 // orbit controls

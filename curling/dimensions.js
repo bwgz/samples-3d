@@ -58,6 +58,7 @@ class IceDimensions {
       centerLineWidth: converter(centerLineWidth),
     };
 
+    dimensions.oneMeter = converter(1);
     dimensions.length = (dimensions.hogLine * 2) + dimensions.hogToHog;
 
     return dimensions;
