@@ -157,7 +157,7 @@ cameras.cameras.push(sideCamera);
 cameras.cameras.push(farCamera);
 cameras.cameras.push(skipCamera);
 
-cameras.live = 3;
+cameras.live = 0;
 gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
 
 // orbit controls
