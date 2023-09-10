@@ -57,8 +57,11 @@ class StoneModel {
                         if (child.isMesh) {
                             child.castShadow = true;
                             child.receiveShadow = true;
+                            console.log("traverse - child: ", child.material);
                             child.material.color.set(0xffffff);
-                            child.material.metalness = 0;
+                            child.material.emissive.set(0x000000);
+                            child.material.emissiveIntensity = 1;
+                            child.material.fog = false;
                         }
                     };
                     stone.traverse(traverser);

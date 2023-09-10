@@ -6,7 +6,7 @@ import { ThirdPersonCamera } from "./camera.js";
 const RED = 0;
 const YELLOW = 1;
 
-import { IceDimensions, meterToMeter, meterToCentimeter, meterToMillimeter, StoneDimensions } from "./dimensions.js";
+import { IceDimensions, meterToMeter, meterToCentimeter, meterToMillimeter, StoneDimensions, ScoreboardDimensions } from "./dimensions.js";
 import { IceModel } from "./models/ice/ice.js";
 import { StoneSet } from "./models/stone/stone.js";
 import { ArenaModel } from "./models/arena/arena.js";
@@ -14,17 +14,19 @@ import { Animation } from "./animation.js";
 import { scene, renderer } from "./init.js";
 import { setupLighting } from "./lighting.js";
 import { dumpGeometry } from "./utils.js";
+import { ScoreboardModel } from "./models/scoreboard/scoreboard.js";
 
 const converter = meterToCentimeter;
 const iceDimensions = IceDimensions.generate(converter);
 const stoneDimensions = StoneDimensions.generate(converter);
+const scoreboardDimensions = ScoreboardDimensions.generate(converter);
 
 let thirdPersonCamera;
 
 const cameras = {
     cameras: [],
     index: 0,
-    live: null,
+    active: null,
 };
 
 let origin = new THREE.Vector3(0, 0, 0);
@@ -32,6 +34,7 @@ let origin = new THREE.Vector3(0, 0, 0);
 const sheet = {
     arena: null,
     ice: null,
+    scoreboard: null,
     stones: [],
 };
 
@@ -51,14 +54,16 @@ const nearCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.in
 const sideCamera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const farCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const skipCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const scoreboardCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 
 cameras.cameras.push(shooterCamera);
 cameras.cameras.push(nearCamera);
 cameras.cameras.push(sideCamera);
 cameras.cameras.push(farCamera);
 cameras.cameras.push(skipCamera);
+cameras.cameras.push(scoreboardCamera);
 
-cameras.live = 0;
+cameras.active = 5;
 
 let stats;
 
@@ -72,15 +77,26 @@ manager.onLoad = function () {
     stats = Stats();
 
     const gui = new dat.gui.GUI();
-    gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
+    const cameraFolder = gui.addFolder("Camera");
+    cameraFolder.add(cameras, "active", { shooter: 0, near: 1, side: 2, far: 3, skip: 4, scoreboard: 5 });
+    cameraFolder.open();
 
     document.body.appendChild(stats.dom);
     const arena = sheet.arena;
     const ice = sheet.ice;
+    const scoreboard = sheet.scoreboard;
     const redStones = sheet.stones[RED];
     const yellowStones = sheet.stones[YELLOW];
 
-    arena.scale.set(2.0, 2.0, 2.0);
+    // arena model's ice surface is length: 2400, width: 1104
+    // typical hockey rink is 61 meters long
+
+    const desiredArenaIceLength = meterToCentimeter(61);
+    const actualArenaIceLength = 2400;
+    console.log("designed arena ice length", desiredArenaIceLength);
+   
+    const scale = desiredArenaIceLength / actualArenaIceLength;
+    arena.scale.set(scale, scale, scale);
     dumpGeometry("arena after scale", arena);
 
     const box = new THREE.Box3().setFromObject(arena);
@@ -106,6 +122,9 @@ manager.onLoad = function () {
     ice.position.set(x, y, z);
     dumpGeometry("ice after move", ice);
 
+    scoreboard.position.set(x, y + iceDimensions.length + meterToCentimeter(1), z);
+    dumpGeometry("scoreboard after move", scoreboard);
+
     const lights = setupLighting(origin, iceDimensions);
     lights.all.forEach((light) => scene.add(light));
 
@@ -122,6 +141,9 @@ manager.onLoad = function () {
     farCamera.position.set(x, y + meterToCentimeter(50), z + meterToCentimeter(6));
     farCamera.lookAt(x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, z - meterToCentimeter(6));
     farCamera.rotateZ(Math.PI);
+
+    scoreboardCamera.position.set(x, y + iceDimensions.length - iceDimensions.backLine, z + meterToCentimeter(1));
+    scoreboardCamera.lookAt(scoreboard.position.x, scoreboard.position.y, scoreboard.position.z);
 
     skipCamera.position.set(
         x,
@@ -149,6 +171,7 @@ manager.onLoad = function () {
 
     scene.add(arena);
     scene.add(ice);
+    scene.add(scoreboard);
 
     shot.stones = sheet.stones;
 
@@ -228,6 +251,12 @@ IceModel.generate(iceDimensions).then((ice) => {
     manager.itemEnd("ice");
 });
 
+manager.itemStart("scoreboard");
+ScoreboardModel.generate(scoreboardDimensions).then((scoreboard) => {
+    sheet.scoreboard = scoreboard;
+    manager.itemEnd("scoreboard");
+});
+
 manager.itemStart("red stones");
 StoneSet.generate(stoneDimensions, "red").then((stones) => {
     sheet.stones[RED] = stones;
@@ -281,7 +310,7 @@ function render() {
         farCamera.updateProjectionMatrix();
     }
 
-    renderer.render(scene, cameras.cameras[cameras.live]);
+    renderer.render(scene, cameras.cameras[cameras.active]);
 
     if (stats) {
         stats.update();

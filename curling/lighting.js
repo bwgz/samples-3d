@@ -29,8 +29,8 @@ const setupLighting = (origin, dimensions) => {
         spot: [],
     };
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.75);
-    lights.ambient.push(ambient);
+    const ambient = new THREE.AmbientLight(0xffffff, 1);
+    lights.ambient.push(ambient);   
 
     let spotLight = generateSpotLight(origin, dimensions, dimensions.teeLine);
     lights.spot.push(spotLight);

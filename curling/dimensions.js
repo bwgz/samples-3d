@@ -29,6 +29,9 @@ const teeLineWidth = 0.05;
 const hogLineWidth = 0.1016;
 const centerLineWidth = 0.05;
 
+const scoreboardWidth = width * 0.9;
+const scoreboardHeight = 1.5;
+
 class IceDimensions {
   static generate(converter) {
     const dimensions = {
@@ -79,4 +82,14 @@ class StoneDimensions {
   }
 }
 
-export { IceDimensions, StoneDimensions, meterToMeter, meterToCentimeter, meterToMillimeter };
+class ScoreboardDimensions {
+  static generate(converter) {
+    const dimensions = {
+      width: converter(scoreboardWidth),
+      height: converter(scoreboardHeight),
+    }
+    return dimensions;
+  }
+}
+
+export { IceDimensions, ScoreboardDimensions, StoneDimensions, meterToMeter, meterToCentimeter, meterToMillimeter };

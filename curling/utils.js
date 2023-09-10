@@ -10,6 +10,7 @@ const dumpGeometry = (string, object) => {
     box.getCenter(center);
     box.getSize(size);
 
+    console.log(string + " - position: " + JSON.stringify(object.position));
     console.log(string + " - boundingBox: " + JSON.stringify(boundingBox));
     console.log(string + " - center: " + JSON.stringify(center));
     console.log(string + " - size: " + JSON.stringify(size));
