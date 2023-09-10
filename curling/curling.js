@@ -60,6 +60,8 @@ cameras.cameras.push(skipCamera);
 
 cameras.live = 0;
 
+let stats;
+
 const manager = new THREE.LoadingManager();
 manager.onStart = function (url, itemsLoaded, itemsTotal) {
     console.log("Started loading file: " + url + ".\nLoaded " + itemsLoaded + " of " + itemsTotal + " files.");
@@ -67,7 +69,7 @@ manager.onStart = function (url, itemsLoaded, itemsTotal) {
 
 manager.onLoad = function () {
     console.log("Loading complete!");
-    const stats = Stats();
+    stats = Stats();
 
     const gui = new dat.gui.GUI();
     gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
@@ -281,7 +283,9 @@ function render() {
 
     renderer.render(scene, cameras.cameras[cameras.live]);
 
-    stats.update();
+    if (stats) {
+        stats.update();
+    }
 }
 
 function animate() {

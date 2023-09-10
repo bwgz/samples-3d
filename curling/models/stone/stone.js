@@ -53,15 +53,17 @@ class StoneModel {
                     const scale = expected / actual;
                     stone.scale.set(scale, scale, scale);
 
-                    stone.traverse(function (child) {
+                    const traverser = (child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
                             child.receiveShadow = true;
                             child.material.color.set(0xffffff);
+                            child.material.metalness = 0;
                         }
-                    });
-
+                    };
+                    stone.traverse(traverser);
                     stone.castShadow = true;
+                    stone.receiveShadow = true;
 
                     resolve(stone);
                 });
