@@ -4,6 +4,7 @@ import { OrbitControls } from "https://unpkg.com/three/examples/jsm/controls/Orb
 import { ThirdPersonCamera } from "./camera.js";
 
 const RED = 0;
+const YELLOW = 1;
 
 import { IceDimensions, meterToMeter, meterToCentimeter, meterToMillimeter, StoneDimensions } from "./dimensions.js";
 import { IceModel } from "./models/ice/ice.js";
@@ -12,7 +13,6 @@ import { ArenaModel } from "./models/arena/arena.js";
 import { Animation } from "./animation.js";
 import { scene, renderer } from "./init.js";
 import { setupLighting } from "./lighting.js";
-import { gui } from "./datgui.js";
 import { dumpGeometry } from "./utils.js";
 
 const converter = meterToCentimeter;
@@ -37,16 +37,13 @@ const sheet = {
 
 const shot = {
     shooter: null,
-    stones: [],
+    stones: null,
 };
 
 const progressBarContainer = document.querySelector(".progress-bar-container");
 const progressBar = document.getElementById("progress-bar");
 
 let mixer;
-
-const stats = Stats();
-document.body.appendChild(stats.dom);
 
 // camera
 const shooterCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, converter(100));
@@ -62,7 +59,6 @@ cameras.cameras.push(farCamera);
 cameras.cameras.push(skipCamera);
 
 cameras.live = 0;
-gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
 
 const manager = new THREE.LoadingManager();
 manager.onStart = function (url, itemsLoaded, itemsTotal) {
@@ -71,9 +67,16 @@ manager.onStart = function (url, itemsLoaded, itemsTotal) {
 
 manager.onLoad = function () {
     console.log("Loading complete!");
+    const stats = Stats();
+
+    const gui = new dat.gui.GUI();
+    gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
+
+    document.body.appendChild(stats.dom);
     const arena = sheet.arena;
     const ice = sheet.ice;
-    const stones = sheet.stones[RED];
+    const redStones = sheet.stones[RED];
+    const yellowStones = sheet.stones[YELLOW];
 
     arena.scale.set(2.0, 2.0, 2.0);
     dumpGeometry("arena after scale", arena);
@@ -115,7 +118,7 @@ manager.onLoad = function () {
     sideCamera.rotateZ(Math.PI / 2);
 
     farCamera.position.set(x, y + meterToCentimeter(50), z + meterToCentimeter(6));
-    farCamera.lookAt(x, y, z - meterToCentimeter(6));
+    farCamera.lookAt(x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, z - meterToCentimeter(6));
     farCamera.rotateZ(Math.PI);
 
     skipCamera.position.set(
@@ -126,8 +129,16 @@ manager.onLoad = function () {
     skipCamera.lookAt(x, y + iceDimensions.hogLine + iceDimensions.hogToHog, z - meterToCentimeter(1));
     skipCamera.rotateZ(Math.PI);
 
-    stones.forEach((stone, index) => {
+    redStones.forEach((stone, index) => {
         stone.position.x = origin.x + iceDimensions.width / 2 - stoneDimensions.diameter / 2;
+        stone.position.y =
+            center.y - iceDimensions.length / 2 + stoneDimensions.diameter * index + stoneDimensions.diameter / 2;
+        stone.position.z = z;
+        scene.add(stone);
+    });
+
+    yellowStones.forEach((stone, index) => {
+        stone.position.x = origin.x - iceDimensions.width / 2 + stoneDimensions.diameter / 2;
         stone.position.y =
             center.y - iceDimensions.length / 2 + stoneDimensions.diameter * index + stoneDimensions.diameter / 2;
         stone.position.z = z;
@@ -151,6 +162,26 @@ manager.onLoad = function () {
     shot.stones[RED][3].position.x = origin.x + meterToCentimeter(1.2);
     shot.stones[RED][3].position.y =
         origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(6.25);
+
+    shot.stones[YELLOW][0].position.x = origin.x - stoneDimensions.diameter * 0.75;
+    shot.stones[YELLOW][0].position.y =
+        origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(2) + stoneDimensions.diameter / 2;
+
+    shot.stones[YELLOW][1].position.x = origin.x - stoneDimensions.diameter / 2;
+    shot.stones[YELLOW][1].position.y =
+        origin.y +
+        iceDimensions.hogLine +
+        iceDimensions.hogToHog +
+        iceDimensions.hogLine -
+        (iceDimensions.teeLine + iceDimensions.twelveFootRadius);
+
+    shot.stones[YELLOW][1].position.x = origin.x - stoneDimensions.diameter * 1.5;
+    shot.stones[YELLOW][1].position.y =
+        origin.y +
+        iceDimensions.hogLine +
+        iceDimensions.hogToHog +
+        iceDimensions.hogLine -
+        (iceDimensions.teeLine - iceDimensions.fourFootRadius);
 
     shot.shooter = shot.stones[RED][4];
 
@@ -195,11 +226,18 @@ IceModel.generate(iceDimensions).then((ice) => {
     manager.itemEnd("ice");
 });
 
-manager.itemStart("stone");
-StoneSet.generate(stoneDimensions).then((stones) => {
+manager.itemStart("red stones");
+StoneSet.generate(stoneDimensions, "red").then((stones) => {
     sheet.stones[RED] = stones;
 
-    manager.itemEnd("stone");
+    manager.itemEnd("red stones");
+});
+
+manager.itemStart("yellow stones");
+StoneSet.generate(stoneDimensions, "yellow").then((stones) => {
+    sheet.stones[YELLOW] = stones;
+
+    manager.itemEnd("yellow stones");
 });
 
 function resizeRendererToDisplaySize(renderer) {
@@ -233,7 +271,7 @@ function render() {
             stone.position.z + meterToCentimeter(2)
         );
 
-            thirdPersonCamera.Update(delta);
+        thirdPersonCamera.Update(delta);
 
         shooterCamera.updateProjectionMatrix();
         nearCamera.updateProjectionMatrix();
