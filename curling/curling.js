@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import Stats from "https://unpkg.com/three/examples/jsm/libs/stats.module";
 import { OrbitControls } from "https://unpkg.com/three/examples/jsm/controls/OrbitControls.js";
+import { ThirdPersonCamera } from "./camera.js";
 
 const RED = 0;
 
@@ -17,6 +18,8 @@ import { dumpGeometry } from "./utils.js";
 const converter = meterToCentimeter;
 const iceDimensions = IceDimensions.generate(converter);
 const stoneDimensions = StoneDimensions.generate(converter);
+
+let thirdPersonCamera;
 
 const cameras = {
     cameras: [],
@@ -37,10 +40,29 @@ const shot = {
     stones: [],
 };
 
+const progressBarContainer = document.querySelector(".progress-bar-container");
+const progressBar = document.getElementById("progress-bar");
+
 let mixer;
 
 const stats = Stats();
 document.body.appendChild(stats.dom);
+
+// camera
+const shooterCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const nearCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const sideCamera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const farCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const skipCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
+
+cameras.cameras.push(shooterCamera);
+cameras.cameras.push(nearCamera);
+cameras.cameras.push(sideCamera);
+cameras.cameras.push(farCamera);
+cameras.cameras.push(skipCamera);
+
+cameras.live = 0;
+gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
 
 const manager = new THREE.LoadingManager();
 manager.onStart = function (url, itemsLoaded, itemsTotal) {
@@ -82,7 +104,6 @@ manager.onLoad = function () {
     const lights = setupLighting(origin, iceDimensions);
     lights.all.forEach((light) => scene.add(light));
 
-
     shooterCamera.position.set(x, y - meterToCentimeter(1), z + meterToCentimeter(2));
     shooterCamera.lookAt(x, y + meterToCentimeter(20), z);
 
@@ -97,7 +118,11 @@ manager.onLoad = function () {
     farCamera.lookAt(x, y, z - meterToCentimeter(6));
     farCamera.rotateZ(Math.PI);
 
-    skipCamera.position.set(x, y + iceDimensions.hogLine + iceDimensions.hogToHog + iceDimensions.hogLine - iceDimensions.backLine, z + meterToCentimeter(2));
+    skipCamera.position.set(
+        x,
+        y + iceDimensions.hogLine + iceDimensions.hogToHog + iceDimensions.hogLine - iceDimensions.backLine,
+        z + meterToCentimeter(2)
+    );
     skipCamera.lookAt(x, y + iceDimensions.hogLine + iceDimensions.hogToHog, z - meterToCentimeter(1));
     skipCamera.rotateZ(Math.PI);
 
@@ -115,7 +140,7 @@ manager.onLoad = function () {
     shot.stones = sheet.stones;
 
     shot.stones[RED][0].position.x = origin.x - iceDimensions.width / 2 + stoneDimensions.diameter / 2;
-    shot.stones[RED][0].position.y = origin.y + iceDimensions.length - (stoneDimensions.diameter / 2);
+    shot.stones[RED][0].position.y = origin.y + iceDimensions.length - stoneDimensions.diameter / 2;
 
     shot.stones[RED][1].position.x = origin.x;
     shot.stones[RED][1].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(2);
@@ -124,41 +149,35 @@ manager.onLoad = function () {
     shot.stones[RED][2].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(3);
 
     shot.stones[RED][3].position.x = origin.x + meterToCentimeter(1.2);
-    shot.stones[RED][3].position.y = origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(6.25);
+    shot.stones[RED][3].position.y =
+        origin.y + iceDimensions.hogLine + iceDimensions.hogToHog + meterToCentimeter(6.25);
 
     shot.shooter = shot.stones[RED][4];
+
+    thirdPersonCamera = new ThirdPersonCamera({
+        camera: shooterCamera,
+        target: shot.shooter,
+        converter: converter,
+    });
+
+    thirdPersonCamera.Update(0);
 
     const finish = new THREE.Vector3(0, 3800, 0);
     const clip = Animation.generate(origin, iceDimensions, finish);
     mixer = new THREE.AnimationMixer(shot.shooter);
     const clipAction = mixer.clipAction(clip);
     clipAction.play();
+
+    progressBarContainer.style.display = "none";
 };
 
 manager.onProgress = function (url, itemsLoaded, itemsTotal) {
-    //console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+    progressBar.value = (itemsLoaded / itemsTotal) * 100;
 };
 
 manager.onError = function (url) {
     console.log("There was an error loading " + url);
 };
-
-
-// camera
-const shooterCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, converter(100));
-const nearCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, converter(100));
-const sideCamera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, converter(100));
-const farCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
-const skipCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
-
-cameras.cameras.push(shooterCamera);
-cameras.cameras.push(nearCamera);
-cameras.cameras.push(sideCamera);
-cameras.cameras.push(farCamera);
-cameras.cameras.push(skipCamera);
-
-cameras.live = 0;
-gui.add(cameras, "live", { shooter: 0, near: 1, side: 2, far: 3, skip: 4 });
 
 // orbit controls
 //const controls = new OrbitControls(camera, renderer.domElement);
@@ -213,8 +232,8 @@ function render() {
             stone.position.y - meterToCentimeter(2),
             stone.position.z + meterToCentimeter(2)
         );
-        shooterCamera.lookAt(stone.position);
-        shooterCamera.lookAt(stone.position.x, stone.position.y + meterToCentimeter(5), stone.position.z);
+
+            thirdPersonCamera.Update(delta);
 
         shooterCamera.updateProjectionMatrix();
         nearCamera.updateProjectionMatrix();

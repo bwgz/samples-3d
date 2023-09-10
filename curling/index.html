@@ -1,39 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>My first three.js app</title>
-    <style>
-      html,
-      body {
-        margin: 0;
-        height: 100%;
-      }
+    <head>
+        <meta charset="utf-8" />
+        <title>three.js sample by Bruce</title>
+        <style>
+            html,
+            body {
+                margin: 0;
+                height: 100%;
+            }
 
-      #c {
-        width: 100%;
-        height: 100%;
-        display: block;
-      }
-    </style>
-  </head>
+            #c {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
 
-  <body>
-    <script
-      async
-      src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"
-    ></script>
+            .progress-bar-container {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
 
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.156.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.156.0/examples/jsm/",
-          "three/loaders/": "https://unpkg.com/three@0.156.0/loaders/"
-        }
-      }
-    </script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.js"></script>
-    <script type="module" src="/samples-3d/curling/curling.js"></script>
-  </body>
+            #progress-bar {
+                width: 30%;
+                margin-top: 0.5%;
+                height: 2%;
+            }
+
+            label {
+                color: white;
+                font-size: 2rem;
+            }
+
+            #splash {
+                padding: 20px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="progress-bar-container">
+            <img id="splash" src="/samples-3d/curling/images/splash.png"/>
+            <label for="progress-bar">Loading Curling Sample...</label>
+            <progress id="progress-bar" value="0" max="100"></progress>
+        </div>
+
+        <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three@0.156.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.156.0/examples/jsm/",
+                    "three/loaders/": "https://unpkg.com/three@0.156.0/loaders/"
+                }
+            }
+        </script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.js"></script>
+        <script type="module" src="/samples-3d/curling/curling.js"></script>
+    </body>
 </html>
