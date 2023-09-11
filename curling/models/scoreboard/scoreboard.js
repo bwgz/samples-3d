@@ -6,18 +6,6 @@ const BOTTOM = 1;
 
 const colors = ["red", "yellow"];
 
-function generateQuadrant(width, height, color) {
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-
-    context.fillStyle = color;
-    context.fillRect(0, 0, width, height);
-
-    return canvas;
-}
-
 class ScoreboardModel {
     static getTextSize(context, text) {
         let metrics = context.measureText(text);
@@ -33,7 +21,6 @@ class ScoreboardModel {
         canvas.height = height;
         const context = canvas.getContext("2d");
         context.font = "24px Verdana";
-        context.textRendering = "optimizeSpeed";
 
         for (let t = 0; t < 2; t++) {
             const color = colors[t];
@@ -46,7 +33,7 @@ class ScoreboardModel {
             h = (height / 2) * 0.4;
             const clock = { x, y, width: w, height: h };
 
-            context.font = "16px Verdana";
+            context.font = "20px Verdana";
             let textSize = ScoreboardModel.getTextSize(context, clocks[t]);
             context.fillStyle = color;
             context.fillText(clocks[t], clock.x + (w / 2) - (textSize.x / 2), clock.y + (h / 2) + (textSize.y / 2));
@@ -57,7 +44,7 @@ class ScoreboardModel {
             h = (height / 2) * 0.6;
             const team = { x: 0, y: t ? origin.y : clock.height, width: w, height: h };
 
-            context.font = "24px Verdana";
+            context.font = "28px Verdana";
             textSize = ScoreboardModel.getTextSize(context, teams[t]);
             context.fillStyle = "white";
             context.fillText(teams[t], team.x + (w / 2) - (textSize.x / 2), team.y + (h / 2) + (textSize.y / 2));
@@ -121,7 +108,6 @@ class ScoreboardModel {
         canvas.height = height;
         const context = canvas.getContext("2d");
         context.font = "24px Arial Narrow";
-        context.textRendering = "optimizeSpeed";
         const ends = 10;
 
         let orgin = new THREE.Vector2(0, 0);
@@ -156,6 +142,9 @@ class ScoreboardModel {
                             ? score[team][end]
                             : ""
                         : score[team].reduce((a, b) => a + (b !== undefined ? b : 0), 0);
+
+                const font = end < ends ? "28px Arial Narrow" : "32px Arial Narrow";
+                context.font = font;
                 const textSize = ScoreboardModel.getTextSize(context, text);
                 const position = scorePositions[team][end];
                 context.fillStyle = end < ends ? "black" : color;

@@ -87,9 +87,20 @@ class ScoreboardDimensions {
     const dimensions = {
       width: converter(scoreboardWidth),
       height: converter(scoreboardHeight),
+      back: converter(2),
     }
     return dimensions;
   }
 }
 
-export { IceDimensions, ScoreboardDimensions, StoneDimensions, meterToMeter, meterToCentimeter, meterToMillimeter };
+class FloorDimensions {
+  static generate(converter) {
+    const dimensions = {
+      width: converter(30),
+      length: converter(61),
+    };
+    return dimensions;
+  }
+}
+
+export { IceDimensions, FloorDimensions, ScoreboardDimensions, StoneDimensions, meterToMeter, meterToCentimeter, meterToMillimeter };
