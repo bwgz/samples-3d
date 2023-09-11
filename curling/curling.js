@@ -64,6 +64,7 @@ const shooterCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window
 const nearCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const sideCamera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const farCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const iceLevelCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const skipCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const scoreboardCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const noseBleedCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, converter(100));
@@ -73,10 +74,24 @@ cameras.cameras.push(nearCamera);
 cameras.cameras.push(sideCamera);
 cameras.cameras.push(farCamera);
 cameras.cameras.push(skipCamera);
+cameras.cameras.push(iceLevelCamera);
 cameras.cameras.push(scoreboardCamera);
 cameras.cameras.push(noseBleedCamera);
 
 cameras.active = 0;
+const gui = new dat.gui.GUI();
+const cameraFolder = gui.addFolder("Camera");
+cameraFolder.add(cameras, "active", {
+    shooter: 0,
+    near: 1,
+    side: 2,
+    far: 3,
+    skip: 4,
+    iceLevelCamera: 5,
+    scoreboard: 6,
+    noseBleed: 7,
+});
+cameraFolder.open();
 
 let stats;
 
@@ -88,11 +103,6 @@ manager.onStart = function (url, itemsLoaded, itemsTotal) {
 manager.onLoad = function () {
     console.log("Loading complete!");
     stats = Stats();
-
-    const gui = new dat.gui.GUI();
-    const cameraFolder = gui.addFolder("Camera");
-    cameraFolder.add(cameras, "active", { shooter: 0, near: 1, side: 2, far: 3, skip: 4, scoreboard: 5, noseBleed: 6 });
-    cameraFolder.open();
 
     document.body.appendChild(stats.dom);
     const arena = sheet.arena;
@@ -126,43 +136,46 @@ manager.onLoad = function () {
     console.log("iceDimensions", iceDimensions);
     const x = center.x + iceDimensions.width / 2 + 125;
     const y = center.y - iceDimensions.length / 2;
-    const z = 15;
+    const z = 11;
+
+    floor.position.set(x, center.y, z);
+
     origin.x = x;
     origin.y = y;
-    origin.z = z;
+    origin.z = z + 2;
 
     console.log("orgin", origin);
 
-    floor.position.set(center.x + 125, center.y, z - 17);
-
-    ice.position.set(x, y, z);
+    ice.position.set(origin.x, origin.y, origin.z);
     dumpGeometry("ice after move", ice);
 
-    scoreboard.position.set(x, y + iceDimensions.length + scoreboardDimensions.back, z);
-    dumpGeometry("scoreboard after move", scoreboard);
+    scoreboard.position.set(origin.x, origin.y + iceDimensions.length + scoreboardDimensions.back, origin.z);
 
     const lights = setupLighting(origin, iceDimensions);
     lights.all.forEach((light) => scene.add(light));
 
-    shooterCamera.position.set(x, y - meterToCentimeter(1), z + meterToCentimeter(2));
-    shooterCamera.lookAt(x, y + meterToCentimeter(20), z);
+    shooterCamera.position.set(origin.x, origin.y - meterToCentimeter(1), origin.z + meterToCentimeter(2));
+    shooterCamera.lookAt(origin.x, origin.y + meterToCentimeter(20), origin.z);
 
-    nearCamera.position.set(x, y - meterToCentimeter(5), z + meterToCentimeter(6));
-    nearCamera.lookAt(x, y, z + meterToCentimeter(6));
+    nearCamera.position.set(origin.x, origin.y - meterToCentimeter(5), origin.z + meterToCentimeter(6));
+    nearCamera.lookAt(origin.x, origin.y, origin.z + meterToCentimeter(6));
 
-    sideCamera.position.set(x + meterToCentimeter(18), y + iceDimensions.length / 2, z + meterToCentimeter(5));
-    sideCamera.lookAt(center.x, center.y, z);
+    sideCamera.position.set(origin.x + meterToCentimeter(18), origin.y + iceDimensions.length / 2, origin.z + meterToCentimeter(5));
+    sideCamera.lookAt(center.x, center.y, origin.z);
     sideCamera.rotateZ(Math.PI / 2);
 
-    farCamera.position.set(x, y + meterToCentimeter(50), z + meterToCentimeter(6));
-    farCamera.lookAt(x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, z - meterToCentimeter(6));
+    farCamera.position.set(origin.x, origin.y + meterToCentimeter(50), origin.z + meterToCentimeter(6));
+    farCamera.lookAt(origin.x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, origin.z - meterToCentimeter(6));
     farCamera.rotateZ(Math.PI);
 
-    scoreboardCamera.position.set(x, y + iceDimensions.length - iceDimensions.backLine, z + meterToCentimeter(1));
+    iceLevelCamera.position.set(origin.x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, origin.z +1);
+    iceLevelCamera.lookAt(origin.x, origin.y + iceDimensions.length, origin.z);
+
+    scoreboardCamera.position.set(origin.x, origin.y + iceDimensions.length - iceDimensions.backLine, origin.z + meterToCentimeter(1));
     scoreboardCamera.lookAt(scoreboard.position.x, scoreboard.position.y, scoreboard.position.z);
 
-    noseBleedCamera.position.set(x + meterToCentimeter(40), y + iceDimensions.length / 2, z + meterToCentimeter(20));
-    noseBleedCamera.lookAt(x, y + iceDimensions.length / 2, z + meterToCentimeter(1));
+    noseBleedCamera.position.set(origin.x + meterToCentimeter(40), y + iceDimensions.length / 2, origin.z + meterToCentimeter(20));
+    noseBleedCamera.lookAt(origin.x, y + iceDimensions.length / 2, origin.z + meterToCentimeter(1));
     noseBleedCamera.rotateZ(Math.PI / 2);
 
     skipCamera.position.set(
@@ -177,7 +190,7 @@ manager.onLoad = function () {
         stone.position.x = origin.x + iceDimensions.width / 2 - stoneDimensions.diameter / 2;
         stone.position.y =
             center.y - iceDimensions.length / 2 + stoneDimensions.diameter * index + stoneDimensions.diameter / 2;
-        stone.position.z = z;
+        stone.position.z = origin.z;
         scene.add(stone);
     });
 
@@ -185,7 +198,7 @@ manager.onLoad = function () {
         stone.position.x = origin.x - iceDimensions.width / 2 + stoneDimensions.diameter / 2;
         stone.position.y =
             center.y - iceDimensions.length / 2 + stoneDimensions.diameter * index + stoneDimensions.diameter / 2;
-        stone.position.z = z;
+        stone.position.z = origin.z;
         scene.add(stone);
     });
 
@@ -339,6 +352,7 @@ function render() {
         sideCamera.updateProjectionMatrix();
         farCamera.updateProjectionMatrix();
         scoreboardCamera.updateProjectionMatrix();
+        iceLevelCamera.updateProjectionMatrix();
         noseBleedCamera.updateProjectionMatrix();
     }
 

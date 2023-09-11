@@ -98,7 +98,7 @@ const generateEnd = (dimensions, image) => {
         bumpMap: bumpMap,
     });
 
-    return new THREE.Mesh(new THREE.PlaneGeometry(dimensions.width, dimensions.hogLine, 32), material);
+    return new THREE.Mesh(new THREE.BoxGeometry(dimensions.width, dimensions.hogLine, 1, 32), material);
 };
 
 const generateHogToHog = (dimensions, image) => {
@@ -159,7 +159,7 @@ const generateHogToHog = (dimensions, image) => {
         bumpMap: bumpMap,
     });
 
-    return new THREE.Mesh(new THREE.PlaneGeometry(dimensions.width, dimensions.hogToHog, 32), material);
+    return new THREE.Mesh(new THREE.BoxGeometry(dimensions.width, dimensions.hogToHog, 1, 32), material);
 };
 
 class IceModel {
