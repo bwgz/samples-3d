@@ -68,6 +68,7 @@ const iceLevelCamera = new THREE.PerspectiveCamera(60, window.innerWidth / windo
 const skipCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const scoreboardCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, converter(100));
 const noseBleedCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, converter(100));
+const orbitCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, converter(500));
 
 cameras.cameras.push(shooterCamera);
 cameras.cameras.push(nearCamera);
@@ -77,20 +78,26 @@ cameras.cameras.push(skipCamera);
 cameras.cameras.push(iceLevelCamera);
 cameras.cameras.push(scoreboardCamera);
 cameras.cameras.push(noseBleedCamera);
+cameras.cameras.push(orbitCamera);
 
 cameras.active = 0;
+
+const orbitControls = new OrbitControls(orbitCamera, renderer.domElement);
+
 const gui = new dat.gui.GUI();
 const cameraFolder = gui.addFolder("Camera");
-cameraFolder.add(cameras, "active", {
-    shooter: 0,
-    near: 1,
-    side: 2,
-    far: 3,
-    skip: 4,
-    iceLevelCamera: 5,
-    scoreboard: 6,
-    noseBleed: 7,
-});
+cameraFolder
+    .add(cameras, "active", {
+        shooter: 0,
+        near: 1,
+        side: 2,
+        far: 3,
+        skip: 4,
+        iceLevelCamera: 5,
+        scoreboard: 6,
+        noseBleed: 7,
+        orbitCamera: 8,
+    });
 cameraFolder.open();
 
 let stats;
@@ -160,21 +167,40 @@ manager.onLoad = function () {
     nearCamera.position.set(origin.x, origin.y - meterToCentimeter(5), origin.z + meterToCentimeter(6));
     nearCamera.lookAt(origin.x, origin.y, origin.z + meterToCentimeter(6));
 
-    sideCamera.position.set(origin.x + meterToCentimeter(18), origin.y + iceDimensions.length / 2, origin.z + meterToCentimeter(5));
+    orbitControls.target.set(origin.x, origin.y, origin.z + meterToCentimeter(6));
+    orbitControls.update();
+
+    sideCamera.position.set(
+        origin.x + meterToCentimeter(18),
+        origin.y + iceDimensions.length / 2,
+        origin.z + meterToCentimeter(5)
+    );
     sideCamera.lookAt(center.x, center.y, origin.z);
     sideCamera.rotateZ(Math.PI / 2);
 
     farCamera.position.set(origin.x, origin.y + meterToCentimeter(50), origin.z + meterToCentimeter(6));
-    farCamera.lookAt(origin.x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, origin.z - meterToCentimeter(6));
+    farCamera.lookAt(
+        origin.x,
+        origin.y + iceDimensions.hogLine + iceDimensions.hogToHog,
+        origin.z - meterToCentimeter(6)
+    );
     farCamera.rotateZ(Math.PI);
 
-    iceLevelCamera.position.set(origin.x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, origin.z +1);
+    iceLevelCamera.position.set(origin.x, origin.y + iceDimensions.hogLine + iceDimensions.hogToHog, origin.z + 1);
     iceLevelCamera.lookAt(origin.x, origin.y + iceDimensions.length, origin.z);
 
-    scoreboardCamera.position.set(origin.x, origin.y + iceDimensions.length - iceDimensions.backLine, origin.z + meterToCentimeter(1));
+    scoreboardCamera.position.set(
+        origin.x,
+        origin.y + iceDimensions.length - iceDimensions.backLine,
+        origin.z + meterToCentimeter(1)
+    );
     scoreboardCamera.lookAt(scoreboard.position.x, scoreboard.position.y, scoreboard.position.z);
 
-    noseBleedCamera.position.set(origin.x + meterToCentimeter(40), y + iceDimensions.length / 2, origin.z + meterToCentimeter(20));
+    noseBleedCamera.position.set(
+        origin.x + meterToCentimeter(40),
+        y + iceDimensions.length / 2,
+        origin.z + meterToCentimeter(20)
+    );
     noseBleedCamera.lookAt(origin.x, y + iceDimensions.length / 2, origin.z + meterToCentimeter(1));
     noseBleedCamera.rotateZ(Math.PI / 2);
 
@@ -354,6 +380,7 @@ function render() {
         scoreboardCamera.updateProjectionMatrix();
         iceLevelCamera.updateProjectionMatrix();
         noseBleedCamera.updateProjectionMatrix();
+        orbitCamera.updateProjectionMatrix();
     }
 
     renderer.render(scene, cameras.cameras[cameras.active]);
