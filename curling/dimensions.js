@@ -29,7 +29,7 @@ const teeLineWidth = 0.05;
 const hogLineWidth = 0.1016;
 const centerLineWidth = 0.05;
 
-const scoreboardWidth = width * 0.9;
+const scoreboardWidth = width * 0.95;
 const scoreboardHeight = 1.5;
 
 class IceDimensions {
