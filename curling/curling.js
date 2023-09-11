@@ -126,14 +126,14 @@ manager.onLoad = function () {
     console.log("iceDimensions", iceDimensions);
     const x = center.x + iceDimensions.width / 2 + 125;
     const y = center.y - iceDimensions.length / 2;
-    const z = 9;
+    const z = 15;
     origin.x = x;
     origin.y = y;
     origin.z = z;
 
     console.log("orgin", origin);
 
-    floor.position.set(center.x + 125, center.y, z - 1);
+    floor.position.set(center.x + 125, center.y, z - 17);
 
     ice.position.set(x, y, z);
     dumpGeometry("ice after move", ice);

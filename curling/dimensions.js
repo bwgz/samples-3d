@@ -96,7 +96,7 @@ class ScoreboardDimensions {
 class FloorDimensions {
   static generate(converter) {
     const dimensions = {
-      width: converter(30),
+      width: converter(31),
       length: converter(61),
     };
     return dimensions;

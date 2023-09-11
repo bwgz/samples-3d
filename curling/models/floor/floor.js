@@ -24,7 +24,7 @@ class FloorModel {
                     map: texture,
                 });
             
-                const floor = new THREE.Mesh(new THREE.PlaneGeometry(width, height, 32), material);
+                const floor = new THREE.Mesh(new THREE.BoxGeometry(width, height, 32), material);
             
                 resolve(floor);
             };
