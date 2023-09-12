@@ -84,10 +84,18 @@ cameras.active = 0;
 
 const orbitControls = new OrbitControls(orbitCamera, renderer.domElement);
 
-const gui = new dat.gui.GUI();
-const cameraFolder = gui.addFolder("Camera");
-cameraFolder
-    .add(cameras, "active", {
+let stats;
+
+const manager = new THREE.LoadingManager();
+manager.onStart = function (url, itemsLoaded, itemsTotal) {
+    console.log("Started loading file: " + url + ".\nLoaded " + itemsLoaded + " of " + itemsTotal + " files.");
+};
+
+manager.onLoad = function () {
+    console.log("Loading complete!");
+    const gui = new dat.gui.GUI();
+    const cameraFolder = gui.addFolder("Camera");
+    cameraFolder.add(cameras, "active", {
         shooter: 0,
         near: 1,
         side: 2,
@@ -98,17 +106,7 @@ cameraFolder
         noseBleed: 7,
         orbitCamera: 8,
     });
-cameraFolder.open();
-
-let stats;
-
-const manager = new THREE.LoadingManager();
-manager.onStart = function (url, itemsLoaded, itemsTotal) {
-    console.log("Started loading file: " + url + ".\nLoaded " + itemsLoaded + " of " + itemsTotal + " files.");
-};
-
-manager.onLoad = function () {
-    console.log("Loading complete!");
+    cameraFolder.open();
     stats = Stats();
 
     document.body.appendChild(stats.dom);
