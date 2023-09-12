@@ -179,7 +179,7 @@ class ScoreboardModel {
     }
 
     static generate(dimensions) {
-        const team = ["SWE", "USA"];
+        const team = ["FIN", "USA"];
         const clock = ["28:10", "29:58"];
         const score = [];
 
